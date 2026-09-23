@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: smart-trader-web
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/runtime/status
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
