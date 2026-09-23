@@ -2,7 +2,7 @@ name: Auto Extract
 on:
   push:
     paths:
-      - uploads/*.zip
+      - "*.zip"
   workflow_dispatch:
 permissions:
   contents: write
@@ -11,12 +11,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Extract
+      - name: Find and unzip
         run: |
+          ls -la
+          ZIP=$(ls *.zip 2>/dev/null | head -1)
+          if [ -z "$ZIP" ]; then
+            echo "no zip found"
+            exit 0
+          fi
+          echo "found: $ZIP"
           mkdir -p extracted
-          for f in uploads/*.zip; do
-            unzip -o "$f" -d extracted/
-          done
+          unzip -o "$ZIP" -d extracted/
       - name: Flatten
         run: |
           cd extracted
@@ -27,7 +32,7 @@ jobs:
       - name: Sync
         run: |
           cp -rn extracted/* . || true
-          rm -rf extracted uploads
+          rm -rf extracted *.zip
       - name: Commit
         run: |
           git config user.name bot
