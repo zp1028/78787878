@@ -1,49 +1,37 @@
-姓名：自动解压上传的ZIP
-
-在……之上：
-推：
-路径：
--'uploads/*.zip'
-工作流程分派(_D)：
-
-权限：
-内容：写入
-
-作业：
-解压缩：
-run-on:ubuntu-latest
-步骤：
--使用：操作/结帐@v4
-
--name：解压所有ZIP
-运行：|
-mkdir-p提取
-for uploads/*.zip；do中的f
-echo"解压：$f"
+name: Auto Extract
+on:
+  push:
+    paths:
+      - uploads/*.zip
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract
+        run: |
+          mkdir -p extracted
+          for f in uploads/*.zip; do
             unzip -o "$f" -d extracted/
-已完成
-
--姓名：拍平目录（如果只有一层文件夹）
-运行：|
-CD提取
-          count=$(ls -A | wc -l)
-如果["$count"-eq1]&&[-d"$(ls-A)"]；则
-inner=$(ls-A)
-echo"检测到单层目录：$内部的，拍平"
-MV"$inner"/*。
-rmdir"$inner"
-Fi
-CD..
-
--姓名：复制到仓库根目录
-运行：|
-CP-rn已提取/*.||正确
-RM-rf提货上载/*.拉链
-
--姓名：提交
-运行：|
-git配置user.name"github操作[bot]"
-git配置用户。电子邮件"github-action[bot]@users.noreply.GitHub.com"
-git add-A
-git commit-m“auto：解压并同步上传的源代码"||echo"无需提交"
-git推送
+          done
+      - name: Flatten
+        run: |
+          cd extracted
+          if [ "$(ls -A | wc -l)" -eq 1 ] && [ -d "$(ls -A)" ]; then
+            mv "$(ls -A)"/* .
+          fi
+          cd ..
+      - name: Sync
+        run: |
+          cp -rn extracted/* . || true
+          rm -rf extracted uploads
+      - name: Commit
+        run: |
+          git config user.name bot
+          git config user.email bot@bot.com
+          git add -A
+          git commit -m extract || echo nothing
+          git push
